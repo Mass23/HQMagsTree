@@ -8,7 +8,7 @@ rule mag_purify:
     input:
         '{MAG}.fasta'
     output:
-        '{MAG}_purified.fasta'
+        '{MAG}_purified.fa'
     conda:
         'envs/mag_purify.yaml'
     shell:
