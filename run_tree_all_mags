@@ -1,0 +1,63 @@
+rule build_tree:
+    input:
+        'iqtree_out/'
+    output:
+        'touch status/tree.done'
+
+rule mag_purify:
+    input:
+        '{MAG}.fasta'
+    output:
+        '{MAG}_purified.fasta'
+    conda:
+        'envs/mag_purify.yaml'
+    shell:
+        'magpurify phylo-markers --db /mnt/esb-storage-01/NOMIS/databases/MAGpurify-db-v1.0 {input} {input}_mgp'
+        'magpurify clade-markers --db /mnt/esb-storage-01/NOMIS/databases/MAGpurify-db-v1.0 {input} {input}_mgp'
+        'magpurify tetra-freq {input} {input}_mgp'
+        'magpurify gc-content {input} {input}_mgp'
+        'magpurify known-contam --db /mnt/esb-storage-01/NOMIS/databases/MAGpurify-db-v1.0 {input} {input}_mgp'
+        'magpurify clean-bin {input} {input}_mgp {output}'
+
+rule list_clean_mags:
+    input:
+        '{MAG}_purified.fasta'
+    output:
+        'genomes_list.txt'
+    shell:
+        'ls *_purified.fasta > genomes_list.txt'
+
+rule run_gtotree:
+    input:
+        'genomes_list.txt'
+    output:
+        'gtotree_out/gtotree_out.tre'
+    conda:
+        'envs/gtotree.yaml'
+    shell:
+        'GToTree -o gtotree_out -f {input} -H Bacteria -j 16 -n 16 -G 0.9'
+
+rule mags_to_keep:
+    input:
+        'gtotree_out/run_files/Fasta_genomes_summary_info.tsv'
+    output:
+        'final_alignment_iqtree.faa'
+    run:
+        import pandas as pd 
+        from Bio import SeqIO
+        comp_df = pd.read_csv(snakemake.input, sep='\t')
+        genomes_to_keep = comp_df[(comp_df['perc_comp'] >= 90) & (comp_df['perc_redund'] < 5)].Assembly_name.tolist()
+        raw_alignment = SeqIO.parse('gtotree_out/Aligned_SCGs.faa','fasta')
+        filtered_alignment = [rec for rec in raw_alignment if rec.description in genomes_to_keep]
+        SeqIO.write(filtered_alignment, snakemake.output, 'fasta')
+
+rule run_iqtree:
+    input:
+        'final_alignment_iqtree.faa'
+    output:
+        'iqtree_out'
+    conda:
+        'envs/gtotree.yaml'
+    shell:
+        'iqtree -s {input} -spp gtotree_out/run_files/Partitions.txt -m MFP -bb 1000 -nt 4 -pre {output}'
+
