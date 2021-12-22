@@ -6,9 +6,9 @@ rule build_tree:
 
 rule mag_purify:
     input:
-        '{MAG}.fasta'
+        '{MAG}.fa'
     output:
-        '{MAG}_purified.fa'
+        '{MAG}_purified.fasta'
     conda:
         'envs/mag_purify.yaml'
     shell:
