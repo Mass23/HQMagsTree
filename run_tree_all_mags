@@ -12,11 +12,11 @@ rule mag_purify:
     conda:
         'envs/mag_purify.yaml'
     shell:
-        'magpurify phylo-markers --db /mnt/esb-storage-01/NOMIS/databases/MAGpurify-db-v1.0 {input} {input}_mgp'
-        'magpurify clade-markers --db /mnt/esb-storage-01/NOMIS/databases/MAGpurify-db-v1.0 {input} {input}_mgp'
+        'magpurify phylo-markers --db MAGpurify-db-v1.0 {input} {input}_mgp'
+        'magpurify clade-markers --db MAGpurify-db-v1.0 {input} {input}_mgp'
         'magpurify tetra-freq {input} {input}_mgp'
         'magpurify gc-content {input} {input}_mgp'
-        'magpurify known-contam --db /mnt/esb-storage-01/NOMIS/databases/MAGpurify-db-v1.0 {input} {input}_mgp'
+        'magpurify known-contam --db MAGpurify-db-v1.0 {input} {input}_mgp'
         'magpurify clean-bin {input} {input}_mgp {output}'
 
 rule list_clean_mags:
